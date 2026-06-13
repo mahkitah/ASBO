@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ASBO
-// @version      2025-02-17
+// @version      1.0
 // @description  Album Side Bar Organiser
 // @author       You
 // @match        https://orpheus.network/torrents.php?id=*
