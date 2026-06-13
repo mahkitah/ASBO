@@ -10,6 +10,8 @@
 // @grant        GM_listValues
 // @grant        GM_deleteValue
 // @grant        GM_registerMenuCommand
+// @updateURL    https://raw.githubusercontent.com/mahkitah/ASBO/master/asbo.user.js
+// @downloadURL  https://raw.githubusercontent.com/mahkitah/ASBO/master/asbo.user.js
 // ==/UserScript==
 
 ( async () => {
