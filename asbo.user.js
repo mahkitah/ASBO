@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ASBO
-// @version      1.0
+// @version      1.1
 // @description  Album Side Bar Organiser
 // @author       You
 // @match        https://orpheus.network/torrents.php?id=*
@@ -62,7 +62,7 @@
             if (!builtIn) {
                 lateBoxPromises.push(
                     waitForElement(selector)
-                        .then( box => handleLatelBox(box, title))
+                        .then( box => handleLateBox(box, title))
                         .catch( () => {
                             console.info(title, 'not installed')
                             GM_deleteValue(title);
@@ -99,7 +99,28 @@
     await Promise.allSettled(lateBoxPromises)
     GM_registerMenuCommand('⚙️ Settings', toggleSettings);
 
-    function handleLatelBox(box, title) {
+    // Auto-expand Add-artist-box when using YADG or YAVAH
+    if (GM_getValue('Add_Artists') !== 0) {
+        const addArtistBox = sb.querySelector('.box_addartists');
+        if (naturalOrderTitles.includes('YADG')) {
+            const artistInput1 = addArtistBox.querySelector('#artist');
+            const valueDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+            Object.defineProperty(artistInput1, 'value', {
+                get() {return valueDescriptor.get.call(artistInput1)},
+                set(newValue) {
+                    valueDescriptor.set.call(artistInput1, newValue);
+                    addArtistBox.status = 0;
+                }
+            })
+        }
+        if (naturalOrderTitles.includes('YAVAH')) {
+            new MutationObserver( () => {
+                addArtistBox.status = 0;
+            }).observe(addArtistBox.querySelector('#AddArtists'), {childList: true})
+        }
+    };
+
+    function handleLateBox(box, title) {
         handleBox(box, title);
         const previous = box.previousElementSibling.boxTitle;
         insertAfter(naturalOrderTitles, previous, title);
@@ -122,26 +143,35 @@
     };
 
     function handleBox(boxElement, title) {
-        if (title === 'Cover') boxElement.querySelector('#covers').append(boxElement.querySelector('#add_cover_div'));
         boxElement.boxTitle = title
-        makeCollapsible(boxElement);
-        applyStatus(boxElement, GM_getValue(title, 0));
-    };
+        const header = boxElement.querySelector('.head');
+        const body = header.nextElementSibling;
 
-    function applyStatus(box, status) {
-        if (status === 2) {
-            box.classList.add('box-hidden');
-        }
-        else {
-            box.classList.remove('box-hidden')
-            const body = box.querySelector('.box-body')
-            if (status === 1) {
-                body.classList.add('box-hidden')
-            }
-            else if (status === 0) {
-                body.classList.remove('box-hidden')
-            }
-        };
+        Object.defineProperty(boxElement, 'status', {
+            get() {return this._status},
+            set(value) {
+                if (this._status !== value) {
+                    this._status = value;
+                    if (value === 2) {
+                        this.classList.add('box-hidden');
+                    }
+                    else {
+                        this.classList.remove('box-hidden')
+                        if (value === 1) {
+                            body.classList.add('box-hidden')
+                        }
+                        else if (value === 0) {
+                            body.classList.remove('box-hidden')
+                        };
+                    };
+                };
+            },
+        });
+
+        boxElement.status = GM_getValue(title, 0)
+        header.querySelector('strong').addEventListener('click', () => boxElement.status = boxElement.status? 0 : 1)
+
+        if (title === 'Cover') boxElement.querySelector('#covers').append(boxElement.querySelector('#add_cover_div'));
     };
 
     function applyOrder(orderedTitles) {
@@ -151,16 +181,8 @@
         sb.append(...orderedElements)
     };
 
-    function makeCollapsible(box) {
-        const header = box.querySelector('.head');
-        const body = header.nextElementSibling;
-        body.classList.add('box-body');
-        header.querySelector('strong').addEventListener('click', () => body.classList.toggle('box-hidden'))
-    };
-
     function insertAfter(array, after, item) {
-        const index = array.indexOf(after);
-        array.splice(index + 1, 0, item);
+        array.splice(array.indexOf(after) + 1, 0, item);
     };
 
     function waitForElement(selector) {
@@ -201,7 +223,7 @@
                     checked: (i === status),
                 });
 
-                btn.addEventListener('change', (e) => {
+                btn.addEventListener('change', e => {
                     this.selected = e.target.nr;
                 });
                 this.buttons.push(btn);
@@ -274,7 +296,6 @@
             }
             .drag-handle {
                 cursor: grab;
-                // user-select: none;
             }
             .drag-handle:active {
                 cursor: grabbing;
@@ -435,7 +456,7 @@
     function applySettings(e) {
         for (const [bGroup, _] of unsavedChanges()) {
             const box = sb.querySelector(bGroup.selector);
-            if (box) applyStatus(box, bGroup.selected);
+            if (box) box.status = bGroup.selected;
             GM_setValue(bGroup.boxName, bGroup.selected)
         };
         if (gridOrderChanged) {
