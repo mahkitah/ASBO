@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ASBO
-// @version      1.1
+// @version      1.2
 // @description  Album Side Bar Organiser
 // @author       You
 // @match        https://orpheus.network/torrents.php?id=*
@@ -51,6 +51,7 @@
         YAETS:              ['.yaets',                  false, true ],
         YADG:               ['#yadg_div',               false, true ],
         YAVAH:              ['#YAVAH',                  false, true ],
+        Unitag:             ['#unitag_div',             false, true ],
     };
 
     const customOrder = GM_getValue('order');
@@ -171,7 +172,8 @@
         boxElement.status = GM_getValue(title, 0)
         header.querySelector('strong').addEventListener('click', () => boxElement.status = boxElement.status? 0 : 1)
 
-        if (title === 'Cover') boxElement.querySelector('#covers').append(boxElement.querySelector('#add_cover_div'));
+        let add;
+        if (title === 'Cover' && (add = boxElement.querySelector('#add_cover_div'))) boxElement.querySelector('#covers').append(add);
     };
 
     function applyOrder(orderedTitles) {
