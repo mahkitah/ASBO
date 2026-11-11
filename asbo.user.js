@@ -103,7 +103,7 @@
     // Auto-expand Add-artist-box when using YADG or YAVAH
     if (GM_getValue('Add_Artists') !== 0) {
         const addArtistBox = sb.querySelector('.box_addartists');
-        if (naturalOrderTitles.includes('YADG')) {
+        if (['YADG', 'Unitag'].some(title => naturalOrderTitles.includes(title))) {
             const artistInput1 = addArtistBox.querySelector('#artist');
             const valueDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
             Object.defineProperty(artistInput1, 'value', {
