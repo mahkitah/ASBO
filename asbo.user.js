@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ASBO
-// @version      1.2
+// @version      1.3
 // @description  Album Side Bar Organiser
 // @author       You
 // @match        https://orpheus.network/torrents.php?id=*
@@ -125,21 +125,29 @@
         handleBox(box, title);
         const previous = box.previousElementSibling.boxTitle;
         insertAfter(naturalOrderTitles, previous, title);
+        if (!customOrder) return;
 
-        if (customOrder) {
-            if (customOrder.includes(title)) {
-                let refTitle = title;
-                do {
-                    refTitle = customOrder[customOrder.indexOf(refTitle) - 1];
-                } while (!naturalOrderTitles.includes(refTitle))
-
-                if (refTitle !== previous) {
-                    sb.querySelector(boxInfo[refTitle][0]).after(box);
-                }
+        if (customOrder.includes(title)) {
+            const customIndex = customOrder.indexOf(title);
+            if (customIndex === 0) {
+                sb.prepend(box);
             } else {
-                insertAfter(customOrder, previous, title);
-                GM_setValue('order', customOrder);
-            };
+                let refIndex = customIndex - 1;
+                while (refIndex >= 0) {
+                    const refTitle = customOrder[refIndex];
+                    if (naturalOrderTitles.includes(refTitle)) {
+                        if (refTitle !== previous) {
+                            sb.querySelector(boxInfo[refTitle][0]).after(box);
+                        }
+                        return;
+                    }
+                    refIndex--;
+                }
+                console.error('no valid reference found', title);
+            }
+        } else {
+            insertAfter(customOrder, previous, title);
+            GM_setValue('order', customOrder);
         };
     };
 
