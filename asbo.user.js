@@ -197,12 +197,13 @@
                 const box = sb.querySelector(selector);
                 if (box) {
                     observer.disconnect();
+                    clearTimeout(timer);
                     resolve(box);
                 }
             });
             observer.observe(sb, {childList: true});
 
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                 observer.disconnect();
                 reject(`${selector} timeout`)
             }, externalScriptsTimeOut);
